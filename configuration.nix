@@ -5,6 +5,8 @@
   # Name our system. Image file names and metadata is derived from this.
   system.name = "android-builder";
 
+  security.pam.multiparty.entries = { };
+
   nixosAndroidBuilder = {
     debug = false;
 
@@ -16,14 +18,6 @@
       ];
     };
     credentialStorage.enable = true;
-
-    # To get a public key, attach your yubikey and run the following command on the host:
-    # pamu2fcfg --pin-verification -i "pam://nixos-android-builder" -o "pam://nixos-android-builder" -u "user"
-    yubikeys.groupA = [
-    ];
-
-    yubikeys.groupB = [
-    ];
 
     unattended.enable = true;
 
