@@ -199,6 +199,10 @@
         inherit self nixos;
       };
 
+      bookDocs = pkgs.callPackage ./packages/docs/book.nix {
+        inherit self nixos;
+      };
+
     in
     {
       inherit nixosModules;
@@ -248,6 +252,7 @@
         inherit attestation-ctl;
         inherit (measuredBoot) measure-boot-state report-measured-boot-state debug-measured-boot-state;
         configure-disk-image = diskInstaller.configure;
+        inherit (bookDocs) book-html build-book preview-book;
         default = image;
       };
 
