@@ -134,6 +134,26 @@ $ du --human-readable --apparent-size "$(realpath result/*.raw)"
 
 (Your disk image's size may be slightly different than this example)
 
+### Offline Configurator {#offline-configurator}
+
+The desktop configuration ("configurator") can build and reconfigure the
+other images in this repository from the flake snapshot bundled at
+`/home/user/nixos-android-builder`. By default this requires internet
+access: nix downloads the locked flake inputs and all build-time
+dependencies on demand.
+
+An offline variant is available that bundles everything needed to 
+rebuild the builder installer image (sources, intermediate outputs and 
+build tools, etc) into the image itself:
+
+```shell-session
+$ nix build --print-build-logs .#desktop-offline-installer-image
+```
+
+Note that the offline image is an order of magnitude larger than the
+regular desktop image (tens of GiB), since it contains the full build
+closure.
+
 ## Sign the Image
 
 With our disk image built, we still need to sign it for secure boot, as it still contains an unsigned `UKI` on its EFI System Partition (`ESP`).
