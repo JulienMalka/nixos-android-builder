@@ -143,7 +143,7 @@ The `android-build-env.nix` NixOS module uses the `fhsenv.nix` module described 
 It also adds 4 scripts, added for convenience:
 
 - `fetch-android` checks out the configured `repo` repository & branch, upstream AOSP's `android-latest-release` by default. If multiple branches are configured via `nixosAndroidBuilder.build.branches`, `fetch-android` will use the branch selected by the `select-branch` script (see below).
-- `build-android` loads the shell setup, sets the configured `lunch` target and builds a given `m` target.
+- `build-android` loads the shell setup, sets the configured `lunch` target and builds a given `m` target. The build output is redirected to a log file (`<source-dir>/out/build-android.log` by default); the display only shows a spinner with the elapsed time. Pass `--verbose` to stream the output to the terminal instead.
 - `android-sbom` is a thin wrapper around `build-android` to run upstream's Software Bill Of Materials facilities.
 - `android-measure-source` hashes all files across all git repositories in the checkout to produce a source measurement in `out/source_measurement.txt`.
 

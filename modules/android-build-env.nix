@@ -147,6 +147,8 @@
 
         SOURCE_DIR='${cfg.sourceDir}'
         LUNCH_TARGET='${cfg.lunchTarget}'
+        LOG_FILE=""
+        VERBOSE=0
 
         usage() {
           cat <<EOF
@@ -155,6 +157,9 @@
         Options:
           --source-dir=DIR      Source directory (default: ${cfg.sourceDir})
           --lunch-target=VALUE  Lunch target (default: ${cfg.lunchTarget})
+          --log-file=FILE       Build log (default: <source-dir>/out/build-android.log)
+          --verbose             Stream build output to the terminal instead of
+                                showing a spinner and logging to a file
           -h, --help            Show this help message
         EOF
           exit 0
@@ -165,21 +170,71 @@
             -h|--help) usage ;;
             --source-dir=*) SOURCE_DIR="''${1#*=}" ;;
             --lunch-target=*) LUNCH_TARGET="''${1#*=}" ;;
+            --log-file=*) LOG_FILE="''${1#*=}" ;;
+            --verbose) VERBOSE=1 ;;
             --) shift; break ;;
             *) break ;;
           esac
           shift
         done
 
+        LOG_FILE="''${LOG_FILE:-$SOURCE_DIR/out/build-android.log}"
+
         echo "Building android:"
         echo "  lunch.target = $LUNCH_TARGET"
         echo "  make.args    = $@"
+        if [ "$VERBOSE" = 0 ]; then
+          echo "  log.file     = $LOG_FILE"
+        fi
         echo
 
         cd "$SOURCE_DIR"
-        source build/envsetup.sh || true
-        lunch "$LUNCH_TARGET"
-        m "$@"
+
+        run_build() {
+          source build/envsetup.sh || true
+          lunch "$LUNCH_TARGET"
+          m "$@"
+        }
+
+        if [ "$VERBOSE" = 1 ]; then
+          run_build "$@"
+          exit $?
+        fi
+
+        # The build output (ninja status lines, compiler warnings, source
+        # code excerpts) must not reach the display; only a spinner and
+        # the elapsed time are shown. The full output goes to $LOG_FILE.
+        mkdir -p "$(dirname "$LOG_FILE")"
+        echo "=== build-android: lunch=$LUNCH_TARGET args='$*' at $(date -Is) ===" >>"$LOG_FILE"
+
+        run_build "$@" >>"$LOG_FILE" 2>&1 &
+        build_pid=$!
+
+        format_elapsed() {
+          printf '%02d:%02d:%02d' $(($1 / 3600)) $(($1 % 3600 / 60)) $(($1 % 60))
+        }
+
+        frames='|/-\'
+        start=$SECONDS
+        i=0
+        if [ -t 1 ]; then
+          while kill -0 "$build_pid" 2>/dev/null; do
+            printf '\r%s Building... %s ' "''${frames:$((i++ % 4)):1}" "$(format_elapsed $((SECONDS - start)))"
+            sleep 1
+          done
+          printf '\r'
+          tput el 2>/dev/null || true
+        fi
+
+        if wait "$build_pid"; then
+          echo "Build completed successfully in $(format_elapsed $((SECONDS - start)))."
+        else
+          status=$?
+          echo "Build failed after $(format_elapsed $((SECONDS - start))) (exit status $status)."
+          echo "Last 30 lines of $LOG_FILE:"
+          tail -n 30 "$LOG_FILE"
+          exit "$status"
+        fi
       '';
 
       sbomAndroid = writeShellScriptBin "android-sbom" ''
