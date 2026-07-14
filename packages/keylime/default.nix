@@ -9,22 +9,16 @@
   tpm2-tools,
   efivar,
 }:
-let
-  # Unreleased master commit past v7.14.1 — needed as the base for our
-  # local patch series.  All four patches below target this revision.
-  version = "7.14.1-unstable-2026-04-02";
-  rev = "4c2a0c6ca84c87667c9a19605ae767e1755ac713";
-in
-python3Packages.buildPythonApplication {
+python3Packages.buildPythonApplication rec {
   pname = "keylime";
   format = "setuptools";
-  inherit version;
+  version = "7.14.3";
 
   src = fetchFromGitHub {
     owner = "keylime";
     repo = "keylime";
-    inherit rev;
-    hash = "sha256-RLmTn/YYWs6BJnnfMj09MAwy3DKQqR0qVohNXhL65/c=";
+    rev = "v${version}";
+    hash = "sha256-Mdsg4InWz9ekNh/dmXuXBJ2vewr8IoGqfZzMgtnS/Og=";
   };
 
   build-system = with python3Packages; [
@@ -66,14 +60,6 @@ python3Packages.buildPythonApplication {
   ];
 
   patches = [
-    # https://github.com/keylime/keylime/pull/1878
-    # Check tpm2_eventlog exit code instead of stderr (benign warnings
-    # from UKI EV_IPL events broke all measured boot attestation).
-    ./0001-elparsing-check-tpm2_eventlog-exit-code-instead-of-s.patch
-    # https://github.com/keylime/keylime/pull/1879
-    # Use the policy's get_relevant_pcrs() for event log PCR replay
-    # (PCR 11 has runtime extensions from systemd-pcrphase).
-    ./0002-tpm-use-policy-s-relevant-PCRs-for-event-log-verific.patch
     # https://github.com/keylime/keylime/issues/1880
     # Tracked upstream as an issue, no PR yet.  The verifier maps
     # `mbpolicies` and `verifiermain` to two independent SQLAlchemy

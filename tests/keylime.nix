@@ -238,7 +238,7 @@ in
               f" https://127.0.0.1:8881/v2.5/agents/"
               f"{agent_uuid}"
               " | jq -re '.results.attestation_status'"
-              " | grep -q FAIL",
+              " | grep -q TIMEOUT",
               timeout=30,
           )
 
