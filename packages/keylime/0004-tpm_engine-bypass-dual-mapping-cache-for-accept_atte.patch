@@ -1,8 +1,7 @@
-From ddc13eb825675ae8b68849437192dd20a6ce1f68 Mon Sep 17 00:00:00 2001
+From 7bff4db310827fc0b7c03dd1f5f972d8df1a93e6 Mon Sep 17 00:00:00 2001
 From: phaer <phaer@phaer.org>
 Date: Tue, 7 Apr 2026 14:13:03 +0200
-Subject: [PATCH 4/4] tpm_engine: bypass dual-mapping cache for
- accept_attestations
+Subject: [PATCH] tpm_engine: bypass dual-mapping cache for accept_attestations
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -45,26 +44,22 @@ attestation_status stays FAIL indefinitely.
 
 Signed-off-by: phaer <phaer@phaer.org>
 ---
- keylime/verification/tpm_engine.py | 35 ++++++++++++++++++++++++++++--
- test/test_tpm_engine.py            | 27 ++++++++++++++++++++---
- 2 files changed, 57 insertions(+), 5 deletions(-)
+ keylime/verification/tpm_engine.py | 32 ++++++++++++++++++++++++
+ test/test_tpm_engine.py            | 39 ++++++++++++++++++++++++------
+ 2 files changed, 64 insertions(+), 7 deletions(-)
 
 diff --git a/keylime/verification/tpm_engine.py b/keylime/verification/tpm_engine.py
-index 18defd1..86ea273 100644
+index bd6c320..0d73d64 100644
 --- a/keylime/verification/tpm_engine.py
 +++ b/keylime/verification/tpm_engine.py
-@@ -746,9 +746,40 @@ class TPMEngine(VerificationEngine):
-             # Reset consecutive failures counter on success
-             self.attestation.agent.consecutive_attestation_failures = 0
+@@ -766,6 +766,38 @@ class TPMEngine(VerificationEngine):
+                 self.attestation.agent.consecutive_attestation_failures = 0
+                 self.attestation.agent.accept_attestations = True
  
--            # Re-enable attestations on successful attestation
--            # This allows PUSH mode agents to recover from timeout-induced FAIL status
-+            # Re-enable attestations on successful attestation.
-+            # This allows PUSH mode agents to recover from timeout-induced FAIL status.
-+            #
-+            # The model-layer assignment below is not enough on its own.
-+            # The root cause is structural: the `verifiermain` row is mapped
-+            # to *two* independent SQLAlchemy ORM classes:
++            # The model-layer accept_attestations assignments above are not
++            # enough on their own.  The root cause is structural: the
++            # `verifiermain` row is mapped to *two* independent SQLAlchemy
++            # ORM classes:
 +            #
 +            #   - keylime.db.verifier_db.VerfierMain (declarative_base) —
 +            #     used by push_agent_monitor and cloud_verifier_tornado
@@ -84,7 +79,6 @@ index 18defd1..86ea273 100644
 +            # proper upstream fix is to consolidate to a single mapping
 +            # for `verifiermain`; until then this is the only mechanism
 +            # that crosses the mapping boundary.
-             self.attestation.agent.accept_attestations = True
 +            with db_manager.session_context() as _session:
 +                _session.execute(
 +                    text(
@@ -93,11 +87,12 @@ index 18defd1..86ea273 100644
 +                    ),
 +                    {"v": True, "id": self.agent_id},
 +                )
- 
++
              # Update operational state to GET_QUOTE if not already set
              # This ensures the agent shows as actively attesting in status queries
+             if not self.attestation.agent.operational_state or self.attestation.agent.operational_state == states.START:
 diff --git a/test/test_tpm_engine.py b/test/test_tpm_engine.py
-index 969fba4..897903e 100644
+index a047443..688685f 100644
 --- a/test/test_tpm_engine.py
 +++ b/test/test_tpm_engine.py
 @@ -203,17 +203,28 @@ class TestTPMEngineProcessResults(unittest.TestCase):
@@ -130,8 +125,8 @@ index 969fba4..897903e 100644
 +
          # Simulate agent that has timed out (accept_attestations=False)
          self.mock_agent.accept_attestations = False
- 
-@@ -228,12 +239,22 @@ class TestTPMEngineProcessResults(unittest.TestCase):
+         self.mock_agent.consecutive_attestation_failures = 0
+@@ -229,12 +240,22 @@ class TestTPMEngineProcessResults(unittest.TestCase):
                              # Process results with no failure (successful attestation)
                              self.engine._process_results(None)
  
@@ -155,6 +150,50 @@ index 969fba4..897903e 100644
          # Consecutive failures should be reset
          self.assertEqual(self.mock_agent.consecutive_attestation_failures, 0)
  
+@@ -284,8 +305,9 @@ class TestTPMEngineProcessResults(unittest.TestCase):
+     @patch("keylime.verification.tpm_engine.config.getboolean")
+     @patch("keylime.verification.tpm_engine.agent_util.is_push_mode_agent")
+     @patch("keylime.verification.tpm_engine.push_agent_monitor.schedule_agent_timeout")
++    @patch("keylime.models.base.db_manager.session_context")
+     def test_process_results_push_fail_to_pass_blocked_by_default(
+-        self, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
++        self, _mock_session_context, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
+     ):
+         """PUSH mode: FAIL → PASS should be blocked by default (auto_recover_attestation_failures=False)"""
+ 
+@@ -323,8 +345,9 @@ class TestTPMEngineProcessResults(unittest.TestCase):
+     @patch("keylime.verification.tpm_engine.config.getboolean")
+     @patch("keylime.verification.tpm_engine.agent_util.is_push_mode_agent")
+     @patch("keylime.verification.tpm_engine.push_agent_monitor.schedule_agent_timeout")
++    @patch("keylime.models.base.db_manager.session_context")
+     def test_process_results_push_fail_to_pass_allowed_when_configured(
+-        self, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
++        self, _mock_session_context, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
+     ):
+         """PUSH mode: FAIL → PASS should be allowed when auto_recover_attestation_failures=True"""
+ 
+@@ -362,8 +385,9 @@ class TestTPMEngineProcessResults(unittest.TestCase):
+     @patch("keylime.verification.tpm_engine.config.getboolean")
+     @patch("keylime.verification.tpm_engine.agent_util.is_push_mode_agent")
+     @patch("keylime.verification.tpm_engine.push_agent_monitor.schedule_agent_timeout")
++    @patch("keylime.models.base.db_manager.session_context")
+     def test_process_results_push_fail_timeout_pass_blocked_by_default(
+-        self, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
++        self, _mock_session_context, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
+     ):
+         """PUSH mode: FAIL → TIMEOUT → PASS should be blocked by default (no bypass via timeout)"""
+ 
+@@ -401,8 +425,9 @@ class TestTPMEngineProcessResults(unittest.TestCase):
+     @patch("keylime.verification.tpm_engine.config.getboolean")
+     @patch("keylime.verification.tpm_engine.agent_util.is_push_mode_agent")
+     @patch("keylime.verification.tpm_engine.push_agent_monitor.schedule_agent_timeout")
++    @patch("keylime.models.base.db_manager.session_context")
+     def test_process_results_push_fail_timeout_pass_allowed_when_configured(
+-        self, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
++        self, _mock_session_context, _mock_schedule_timeout, mock_is_push_mode, mock_getboolean
+     ):
+         """PUSH mode: FAIL → TIMEOUT → PASS should be allowed when auto_recover_attestation_failures=True"""
+ 
 -- 
-2.53.0
+2.54.0
 
