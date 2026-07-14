@@ -339,28 +339,23 @@ $ build-android
 Building android:
   lunch.target = aosp_cf_x86_64_only_phone-aosp_current-eng
   make.args    =
+  log.file     = /var/lib/build/source/out/build-android.log
 
-
-============================================
-PLATFORM_VERSION_CODENAME=REL
-PLATFORM_VERSION=16
-TARGET_PRODUCT=aosp_cf_x86_64_only_phone
-TARGET_BUILD_VARIANT=eng
-TARGET_ARCH=x86_64
-TARGET_ARCH_VARIANT=silvermont
-HOST_OS=linux
-HOST_OS_EXTRA=Linux-6.12.44-x86_64-NixOS-25.11-(Xantusia)
-HOST_CROSS_OS=windows
-BUILD_ID=BP2A.250605.031.A2
-OUT_DIR=out
-SOONG_ONLY=false
-============================================
-[...]
-[ 38% 5/13 20s remaining] cp if changed out/soong/.intermediates/build/release/build_config /build_flag_system_ext/android_common/build_flags.json
-
-#### build completed successfully (12 seconds) ####
+/ Building... 00:12:34
 ```
-(Example output is from a run with all artifacts already built. First run will be much more verbose).
+
+The build output itself (ninja status lines, compiler warnings, etc.) is
+not shown on the display, only a spinner with the elapsed time is. The
+full output is written to a log file, `<source-dir>/out/build-android.log`
+by default. When the build finishes, a summary line is printed:
+
+``` text
+Build completed successfully in 01:23:45.
+```
+
+If the build fails, the last 30 lines of the log are printed to help with
+diagnosis. To watch the full build output live, run
+`build-android --verbose`.
 
 The product and variant to build can be customized, both at run-time and at build-time.
 See below for [build-time customization](#customization), or `build-android --help` for available run-time flags:
@@ -375,6 +370,9 @@ Usage: /run/current-system/sw/bin/build-android [options] [-- ...m args...]
 Options:
   --source-dir=DIR      Source directory (default: /var/lib/build/source)
   --lunch-target=VALUE  Lunch target (default: aosp_cf_x86_64_only_phone-aosp_current-eng)
+  --log-file=FILE       Build log (default: <source-dir>/out/build-android.log)
+  --verbose             Stream build output to the terminal instead of
+                        showing a spinner and logging to a file
   -h, --help            Show this help message
 ```
 
