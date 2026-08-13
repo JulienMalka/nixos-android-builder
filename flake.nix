@@ -21,7 +21,24 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+
+      e2fsprogsLargeFileFix = _final: prev: {
+        e2fsprogs = prev.e2fsprogs.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            # Fixes this issue: https://github.com/tytso/e2fsprogs/issues/254
+            (prev.fetchpatch {
+              name = "create_inode-fix-for-file-larger-than-2gb.patch";
+              url = "https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/patch/?id=6359e0ec8ef249d202dbb8583a6e430f20c5b1a0";
+              hash = "sha256-hOsC8jP7+AtJhYv84p06Kzkud3DG0IKQPxXQuR0fRO0=";
+            })
+          ];
+        });
+      };
+
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ e2fsprogsLargeFileFix ];
+      };
       lib = nixpkgs.lib;
 
       customPackages = import ./packages { inherit pkgs; };
