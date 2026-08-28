@@ -57,6 +57,9 @@ in
         };
         "10-root" = {
           storePaths = [ config.system.build.toplevel ];
+          contents."/nix-path-registration".source = "${
+            pkgs.closureInfo { rootPaths = [ config.system.build.toplevel ]; }
+          }/registration";
           repartConfig = {
             Type = "root";
             Label = "root";
@@ -66,6 +69,14 @@ in
         };
       };
     };
+
+    # Register the bundled store paths in the nix database on first boot
+    boot.postBootCommands = ''
+      if [ -f /nix-path-registration ]; then
+        ${config.nix.package}/bin/nix-store --load-db < /nix-path-registration
+        rm -f /nix-path-registration
+      fi
+    '';
 
     # Grow root partition to fill disk at first boot.
     boot.initrd.systemd.repart.enable = true;

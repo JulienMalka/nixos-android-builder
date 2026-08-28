@@ -21,7 +21,24 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+
+      e2fsprogsLargeFileFix = _final: prev: {
+        e2fsprogs = prev.e2fsprogs.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            # Fixes this issue: https://github.com/tytso/e2fsprogs/issues/254
+            (prev.fetchpatch {
+              name = "create_inode-fix-for-file-larger-than-2gb.patch";
+              url = "https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/patch/?id=6359e0ec8ef249d202dbb8583a6e430f20c5b1a0";
+              hash = "sha256-hOsC8jP7+AtJhYv84p06Kzkud3DG0IKQPxXQuR0fRO0=";
+            })
+          ];
+        });
+      };
+
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ e2fsprogsLargeFileFix ];
+      };
       lib = nixpkgs.lib;
 
       customPackages = import ./packages { inherit pkgs; };
@@ -148,6 +165,36 @@
       };
       run-desktop-vm = desktop.config.system.build.vmWithWritableDisk;
 
+      # Bundle flake inputs into the offline desktop so evaluation can happen offline
+      collectFlakeInputs =
+        input: [ input ] ++ lib.concatMap collectFlakeInputs (lib.attrValues (input.inputs or { }));
+      flakeInputPaths = lib.unique (map (input: input.outPath) (collectFlakeInputs self));
+
+      # Note: on a store that has never evaluated these outputs, `nix flake check` fails
+      # See https://github.com/NixOS/nix/issues/15448
+      desktop-offline = desktop.extendModules {
+        modules = [
+          {
+            system.name = lib.mkForce "desktop-offline";
+            system.extraDependencies = [ installer-image ] ++ flakeInputPaths;
+            system.includeBuildDependencies = true;
+            # Don't query binary caches
+            nix.settings.substituters = lib.mkForce [ ];
+          }
+        ];
+      };
+      run-desktop-offline-vm = desktop-offline.config.system.build.vmWithWritableDisk;
+
+      desktopOfflineInstallerModules = mkInstallerModules desktop-offline;
+
+      desktop-offline-installer = pkgs.nixos {
+        nixpkgs.hostPlatform = { inherit system; };
+        imports = desktopOfflineInstallerModules;
+        _module.args = { inherit customPackages; };
+      };
+      desktop-offline-installer-vm = desktop-offline-installer.config.system.build.vmWithInstallerDisk;
+      desktop-offline-installer-image = desktop-offline-installer.config.system.build.image;
+
       docs = pkgs.callPackage ./packages/docs {
         inherit self nixos;
       };
@@ -161,6 +208,8 @@
           installer
           desktop
           desktop-installer
+          desktop-offline
+          desktop-offline-installer
           ;
       };
 
@@ -183,11 +232,14 @@
         inherit
           run-vm
           run-desktop-vm
+          run-desktop-offline-vm
           image
           installer-image
           installer-vm
           desktop-installer-image
           desktop-installer-vm
+          desktop-offline-installer-image
+          desktop-offline-installer-vm
           keylime
           keylime-agent
           keylime-git-clone
