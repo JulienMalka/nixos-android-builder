@@ -1,0 +1,94 @@
+# SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: nix fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: NixOS/nix-installer-action@v1
+      - run: nix run nixpkgs#nixfmt-tree -- --ci
+
+  eval:
+    name: evaluate checks
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      any-jobs: ${{ steps.matrix.outputs.any-jobs }}
+      manifest-version: ${{ steps.matrix.outputs.manifest-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: NixOS/nix-installer-action@v1
+      - uses: Mic92/hestia@v3
+        with:
+          upstream-cache-filter: "true"
+      - id: matrix
+        uses: Mic92/hestia/matrix@v3
+        with:
+          flake: ".#checks"
+          nix-eval-jobs: "nix run nixpkgs#nix-eval-jobs --"
+
+  check:
+    name: ${{ matrix.name }}
+    needs: eval
+    if: needs.eval.outputs.any-jobs == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.eval.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          df -h /
+
+      - name: Enable KVM for the nix build users
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
+      - name: Allow unprivileged user namespaces
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: NixOS/nix-installer-action@v1
+        with:
+          extra-conf: |
+            system-features = nixos-test benchmark big-parallel kvm
+      - uses: Mic92/hestia@v3
+        with:
+          wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
+          # Only cache what we build ourselves; nixpkgs paths come from
+          # cache.nixos.org. Keeps us under the 10 GB Actions cache quota.
+          upstream-cache-filter: "true"
+
+      # Build by flake attribute rather than by the derivation path the eval
+      # job registered in the cache. GitHub evicts cache entries under quota
+      # pressure, and a job that can only fetch its derivation from the cache
+      # fails outright when that happens. Re-evaluating costs about a minute
+      # and turns eviction into a plain rebuild.
+      - name: Build
+        run: nix build -L ".#checks.${{ matrix.attr }}"

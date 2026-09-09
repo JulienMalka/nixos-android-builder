@@ -25,8 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: NixOS/nix-installer-action@main
-      - uses: Mic92/hestia/action@main
+      - uses: NixOS/nix-installer-action@v1
+      - uses: Mic92/hestia@v3
+        with:
+          upstream-cache-filter: "true"
 
       - name: Build HTML docs
         run: nix build .#book-html -o result-html
@@ -40,8 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: NixOS/nix-installer-action@main
-      - uses: Mic92/hestia/action@main
+      - uses: NixOS/nix-installer-action@v1
+      - uses: Mic92/hestia@v3
+        with:
+          upstream-cache-filter: "true"
 
       - name: Build PDF docs
         run: nix run .#build-book -- pdf
