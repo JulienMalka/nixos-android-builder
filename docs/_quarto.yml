@@ -9,7 +9,6 @@ book:
   title: "NixOS Android Builder"
   subtitle: "Ephemeral, Attested AOSP Build System"
   author: "TII"
-  date: last-modified
   chapters:
     - index.qmd
     - part: "User Guide"
