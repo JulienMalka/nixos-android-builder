@@ -21,6 +21,20 @@ nix build -L .#desktop-installer-image
 install -m 600 result/disk-installer.raw desktop-installer.raw
 ```
 
+### Offline Variant {#sec-desktop-offline}
+
+The desktop ("configurator") can build and reconfigure the other images in this repository from the flake snapshot bundled at `/home/user/nixos-android-builder`. By default this requires internet access: nix downloads the locked flake inputs and all build-time dependencies on demand.
+
+An offline variant bundles everything needed to rebuild the builder installer image (sources, intermediate outputs, build tools) into the image itself:
+
+```bash
+nix build -L .#desktop-offline-installer-image
+```
+
+::: {.callout-warning}
+The offline image is an order of magnitude larger than the regular desktop image (tens of GiB), since it contains the full build closure.
+:::
+
 ## Customise
 
 Edit `desktop-configuration.nix`:

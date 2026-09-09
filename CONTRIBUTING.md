@@ -39,13 +39,18 @@ $ nix build -L .#checks.x86_64-linux.integration
 
 Tests are only re-run when inputs change. Pass `--keep-vm-state` to preserve VM state between runs for iterative debugging.
 
-Additional tests cover the disk installer, keylime attestation, and auto-enrollment:
+Additional tests cover the disk installer, credential storage, keylime attestation, auto-enrollment, the attestation-gated git server, and the desktop variant:
 
 ```bash
 $ nix build -L .#checks.x86_64-linux.installer
 $ nix build -L .#checks.x86_64-linux.installerInteractive
+$ nix build -L .#checks.x86_64-linux.credentialStorage
 $ nix build -L .#checks.x86_64-linux.keylime
 $ nix build -L .#checks.x86_64-linux.keylime-auto-enroll
+$ nix build -L .#checks.x86_64-linux.keylime-git-server
+$ nix build -L .#checks.x86_64-linux.desktop
+$ nix build -L .#checks.x86_64-linux.desktopInstaller
+$ nix build -L .#checks.x86_64-linux.policyTests
 ```
 
 The `keylime-auto-enroll` test exercises the full auto-enrollment flow: agent registration, measured boot reporting, daemon-driven enrollment, and attestation persistence across 5 reboots.
@@ -57,6 +62,7 @@ The `keylime-auto-enroll` test exercises the full auto-enrollment flow: agent re
 nix build .#image                    # Builder image
 nix build .#installer-image          # Disk installer
 nix build .#desktop-installer-image  # Desktop installer
+nix build .#desktop-offline-installer-image  # Desktop installer with bundled build closure
 
 # Individual packages
 nix build .#keylime
@@ -92,7 +98,7 @@ packages/                     # Custom Nix packages
 
 system-manager/               # Keylime server for non-NixOS hosts
 tests/                        # NixOS integration tests
-docs/                         # Documentation (Pandoc → PDF)
+docs/                         # Documentation (Quarto book)
 ```
 
 ## Documentation

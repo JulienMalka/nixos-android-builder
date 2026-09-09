@@ -27,14 +27,19 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## Tests
 
-NixOS VM tests verify the build environment, Secure Boot, dm-verity, installer, and attestation:
+NixOS VM tests verify the build environment, Secure Boot, dm-verity, installer, credential storage, attestation, and the desktop variant:
 
 ```bash
 nix build -L .#checks.x86_64-linux.integration
 nix build -L .#checks.x86_64-linux.installer
 nix build -L .#checks.x86_64-linux.installerInteractive
+nix build -L .#checks.x86_64-linux.credentialStorage
 nix build -L .#checks.x86_64-linux.keylime
 nix build -L .#checks.x86_64-linux.keylime-auto-enroll
+nix build -L .#checks.x86_64-linux.keylime-git-server
+nix build -L .#checks.x86_64-linux.desktop
+nix build -L .#checks.x86_64-linux.desktopInstaller
+nix build -L .#checks.x86_64-linux.policyTests
 ```
 
 Tests are only re-run when inputs change. Pass `--keep-vm-state` to preserve VM state for iterative debugging.

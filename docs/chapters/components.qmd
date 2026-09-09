@@ -16,7 +16,7 @@ A derivation bundles all declared packages into `/bin` + `/lib`, bind-mounted at
 The `android-build-env.nix` module adds AOSP build dependencies to the FHS environment, plus reference wrapper scripts for the default workflow:
 
 - `fetch-android` — clone the configured repo branch
-- `build-android` — set lunch target and build
+- `build-android` — set lunch target and build; output goes to a log file, see @sec-running-builds
 - `android-sbom` — generate SBOM via upstream facilities
 - `android-measure-source` — hash all files for source measurement
 

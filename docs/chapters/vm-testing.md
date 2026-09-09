@@ -25,6 +25,14 @@ nix run .#installer-vm
 
 Tests the @sec-disk-installer workflow in a VM.
 
+## Desktop VM
+
+```bash
+nix run .#run-desktop-vm              # desktop variant (@sec-desktop)
+nix run .#run-desktop-offline-vm      # offline variant (@sec-desktop-offline)
+nix run .#desktop-installer-vm        # desktop installer
+```
+
 ## Exiting
 
 ```bash

@@ -25,7 +25,20 @@ Run `fetch-android --help` for flags (manifest URL, branch, source directory, gi
 build-android
 ```
 
-Run `build-android --help` for flags (lunch target, source directory).
+The build output (ninja status lines, compiler warnings, etc.) is not shown on the display. Only a spinner with the elapsed time is, while the full output is written to a log file, `<source-dir>/out/build-android.log` by default:
+
+```text
+Building android:
+  lunch.target = aosp_cf_x86_64_only_phone-aosp_current-eng
+  make.args    =
+  log.file     = /var/lib/build/source/out/build-android.log
+
+/ Building... 00:12:34
+```
+
+When the build finishes, a summary line with the elapsed time is printed. If it fails, the last 30 lines of the log are printed to help with diagnosis. Pass `--verbose` to stream the full build output to the terminal instead.
+
+Run `build-android --help` for flags (lunch target, source directory, log file).
 
 Lower-level tools (`lunch`, `m`, `ninja`) are available after loading Android's `envsetup.sh`:
 
