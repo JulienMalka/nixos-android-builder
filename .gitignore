@@ -7,7 +7,6 @@ android-builder-efi-vars.fd
 .direnv/
 result
 keys
-docs/mermaid-filter.err
 docs/_output/
 docs/.quarto/
 __pycache__/

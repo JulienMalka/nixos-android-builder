@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Preface {.unnumbered}
 
 The NixOS Android Builder produces signed, ephemeral disk images for building AOSP. Each boot starts clean: the build partition is encrypted with a fresh random key and wiped on shutdown. A Keylime attestation server continuously verifies that builder machines are running unmodified software.

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Demo Runbook: Attestation-Gated Git {#sec-demo-runbook .appendix}
 
 Audience: demo operator (presenting to executives / customers)

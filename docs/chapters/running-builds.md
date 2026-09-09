@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Running Android Builds {#sec-running-builds}
 
 After booting, you get a shell with the Android build toolchain.

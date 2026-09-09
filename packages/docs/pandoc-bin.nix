@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+# SPDX-License-Identifier: Apache-2.0
+
 # Pandoc 3.8.3 static binary — matches quarto 1.9.37's expected version.
 # Remove this once nixpkgs ships pandoc >= 3.8.
 {

@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+-- SPDX-License-Identifier: Apache-2.0
+
 local json = require("pandoc.json")
 local utils = require("pandoc.utils")
 

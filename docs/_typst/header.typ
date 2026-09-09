@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+// SPDX-License-Identifier: CC-BY-SA-4.0
+
 // Tables: prevent overflow, enable word wrap, keep together
 #set table(
   stroke: 0.5pt + luma(180),

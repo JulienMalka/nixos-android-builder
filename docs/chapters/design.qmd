@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Design Principles {#sec-design}
 
 A reference implementation and proof-of-concept for offline, SLSA‑compliant AOSP builds. The system is modular — individual components (attestation, FHS environment, credential storage) can be adapted or replaced for specific distribution needs.

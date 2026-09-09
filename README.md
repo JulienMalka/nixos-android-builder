@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # NixOS Android Builder
 
 A custom NixOS system to build Android Open Source Project in an ephemeral, attested environment.

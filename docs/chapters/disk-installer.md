@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Disk Installer {#sec-disk-installer}
 
 The installer image contains a minimal ESP plus the builder image as payload. It boots and flashes the payload to a local disk.

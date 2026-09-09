@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 TII (SSRC) and the Ghaf contributors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Attestation Server Setup {#sec-attestation-server}
 
 The `system-manager/` directory turns a stock Linux machine (Ubuntu, Debian, etc.) into a Keylime attestation server — registrar, verifier, auto-enrollment daemon, and an optional attestation-gated git server.
