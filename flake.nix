@@ -195,10 +195,6 @@
       desktop-offline-installer-vm = desktop-offline-installer.config.system.build.vmWithInstallerDisk;
       desktop-offline-installer-image = desktop-offline-installer.config.system.build.image;
 
-      docs = pkgs.callPackage ./packages/docs {
-        inherit self nixos;
-      };
-
       bookDocs = pkgs.callPackage ./packages/docs/book.nix {
         inherit self nixos;
       };
@@ -225,8 +221,8 @@
             attestation-ctl
             create-signing-keys
             diskInstaller.configure
-            docs.build-docs
-            docs.watch-docs
+            bookDocs.build-book
+            bookDocs.preview-book
             pkgs.pam_u2f
           ];
         };
