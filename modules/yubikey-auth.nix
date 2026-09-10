@@ -18,7 +18,9 @@ in
 {
   security.pam.multiparty = {
     enable = lib.mkDefault true;
-    groups = [
+    # One card per group is required at login. Override with a single
+    # group (e.g. `groups = [ "A" ];`) for test setups with one YubiKey.
+    groups = lib.mkDefault [
       "A"
       "B"
     ];
