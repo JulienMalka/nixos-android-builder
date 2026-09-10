@@ -12,6 +12,11 @@
   #   { group = "A"; spki = "MFkw..."; }
   #   { group = "B"; spki = "MFkw..."; }
   # ];
+  #
+  # The SPKI can be re-derived at any time from the certificate stored on
+  # the card, no reset needed:
+  #   yubico-piv-tool -a read-certificate -s 9a \
+  #     | openssl x509 -noout -pubkey | openssl pkey -pubin -outform DER | base64 -w0
   security.pam.multiparty.entries = { };
 
   nixosAndroidBuilder = {
